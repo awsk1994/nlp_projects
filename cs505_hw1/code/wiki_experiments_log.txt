@@ -1,0 +1,47 @@
+About to load spacy model
+Finished loading spacy's English models
+Going through wiki_00
+Going through wiki_01
+Going through wiki_02
+Going through wiki_03
+Going through wiki_04
+Going through wiki_05
+Going through wiki_06
+Going through wiki_07
+Going through wiki_08
+Going through wiki_09
+Going through wiki_10
+Going through wiki_11
+Going through wiki_12
+Going through wiki_13
+Going through wiki_14
+Going through wiki_15
+Going through wiki_16
+Going through wiki_17
+Going through wiki_18
+Going through wiki_19
+Going through wiki_20
+Going through wiki_21
+Going through wiki_22
+Going through wiki_23
+Non punctuation and non space token count: 162201
+Lemma count: 14001
+Named entity counts per type of named entity:
+NORP: 1191
+PERSON: 2476
+WORK_OF_ART: 567
+CARDINAL: 1396
+ORG: 3865
+DATE: 2353
+LOC: 216
+GPE: 1961
+ORDINAL: 432
+EVENT: 230
+PERCENT: 148
+LANGUAGE: 41
+MONEY: 114
+TIME: 75
+LAW: 221
+PRODUCT: 108
+QUANTITY: 29
+FAC: 146
