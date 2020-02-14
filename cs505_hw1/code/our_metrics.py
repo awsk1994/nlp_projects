@@ -154,7 +154,10 @@ def precision(y_true, y_pred, average, labels):
         precisions = []
         for l in labels:
             tp, tn, fp, fn = get_confusion_matrix_val(y_true, y_pred, l)
-            prec_v = tp / (tp + fp)
+            if (tp + fp) == 0:
+                prec_v = 0
+            else:
+                prec_v = tp / (tp + fp)
             precisions.append(prec_v)
         result = np.average(precisions)
     else:

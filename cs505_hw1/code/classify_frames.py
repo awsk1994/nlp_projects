@@ -1,3 +1,11 @@
+'''
+
+TODO:
+ - Build own classifier
+ - Confirm precision and recall methods are correct
+
+'''
+
 from pathlib import Path
 import pandas as pd
 from sklearn.pipeline import Pipeline
@@ -6,6 +14,12 @@ from sklearn.naive_bayes import ComplementNB
 from sklearn.linear_model import LogisticRegression
 
 import our_metrics
+
+# Added lib
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.naive_bayes import MultinomialNB
+import numpy as np
+
 
 TRAIN_FILE = Path("raw_data/GunViolence/train.tsv")
 DEV_FILE = Path("raw_data/GunViolence/dev.tsv")
@@ -24,7 +38,7 @@ LABELS = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 # 9) Economic consequences
 
 
-def load_data_file(data_file):
+def load_data_file(data_file, is_test_file = False):
     """Load newsframing data
 
     Returns
@@ -44,16 +58,17 @@ def load_data_file(data_file):
         X = df[text_col].tolist()
 
         y = None
-        if theme1_col in df.columns:
-            y = df[theme1_col].tolist()
+        if not is_test_file:
+            if theme1_col in df.columns:
+                y = df[theme1_col].tolist()
 
         print(
             "loaded {} lines {} labels ... done".format(
                 len(X), "with" if y is not None else "without"
             )
         )
-    return (X, y)
 
+    return (X, y)
 
 def build_naive_bayes():
     """
@@ -65,6 +80,12 @@ def build_naive_bayes():
     """
     nb_pipeline = None
     ##### Write code here #######
+
+    nb_pipeline = Pipeline([
+        ('vect', CountVectorizer()),
+        ('tfidf', TfidfTransformer()),
+        ('clf', MultinomialNB()),
+    ])
 
     ##### End of your work ######
     return nb_pipeline
@@ -80,6 +101,12 @@ def build_logistic_regr():
     """
     logistic_pipeline = None
     ##### Write code here #######
+
+    logistic_pipeline = Pipeline([
+        ('vect', CountVectorizer()),
+        ('tfidf', TfidfTransformer()),
+        ('clf', LogisticRegression(multi_class='ovr')),
+    ])
 
     ##### End of your work ######
     return logistic_pipeline
@@ -124,13 +151,67 @@ def output_predictions(pipeline):
     pass
     ##### End of your work ######
 
+# def testing(X_train, y_train_true, X_dev, y_dev_true):
+#     from sklearn.feature_extraction.text import CountVectorizer
+#     from sklearn.feature_extraction.text import TfidfTransformer
+#     from sklearn.naive_bayes import MultinomialNB
+
+#     # Count Vectorizer
+#     train_vectorizer = CountVectorizer()
+#     X_cv_train = train_vectorizer.fit_transform(X_train)
+#     # print(vectorizer.get_feature_names())
+#     # print(X.toarray())
+
+#     # Tfid Transformer
+#     tf_train_transformer = TfidfTransformer().fit(X_cv_train)
+#     X_train_tfidf = tf_train_transformer.transform(X_cv_train)
+#     # print(X_train_tf)
+
+#     # Fit model
+#     print("X_train_tfidf shape", X_train_tfidf.shape)
+
+#     # print(tfidf_transformer.idf_)
+#     # print(cv.get_feature_names())
+#     clf = MultinomialNB().fit(X_train_tfidf, y_train_true)
+
+#     # Predict validation set
+#     # dev_vectorizer = CountVectorizer()
+#     X_cv_dev = train_vectorizer.transform(X_dev)
+#     print("fname", len(train_vectorizer.get_feature_names()))
+
+#     # tf_dev_transformer = TfidfTransformer(use_idf=False).fit(X_cv_dev)
+#     X_dev_tfidf = tf_train_transformer.transform(X_cv_dev)
+#     print(tf_train_transformer.get_params())
+
+
+#     predicted = clf.predict(X_dev_tfidf)
+
+#     np_pred = np.array(predicted)
+#     np_y = np.array(y_dev_true)
+#     print("Predicted:")
+#     print(np_pred)
+#     print("True:")
+#     print(np_y)
+
+#     print("Correct:", np.sum(np_pred == np_y))
+#     print("Wrong", np.sum(np_pred != np_y))
+
+# def compare_result(pipe, name, X_dev, y_dev_true):
+#     pred = pipe.predict(X_dev)
+#     np_pred, np_y = np.array(pred), np.array(y_dev_true)
+#     print("Pipe name = {}".format(name))
+#     print("Correct:", np.sum(np_pred == np_y))
+#     print("Wrong", np.sum(np_pred != np_y))
 
 def main():
     X_train, y_train_true = load_data_file(TRAIN_FILE)
     X_dev, y_dev_true = load_data_file(DEV_FILE)
+    X_test, _ = load_data_file(TEST_FILE, is_test_file=True)
 
     bayes_pipeline = build_naive_bayes()
     logistic_pipeline = build_logistic_regr()
+
+    # testing(X_train, y_train_true, X_dev, y_dev_true)
 
     for name, pipeline in (
         ["Naive Bayes", bayes_pipeline,],
@@ -139,7 +220,19 @@ def main():
         if pipeline is not None:
 
             ##### Write code here #######
-            continue
+
+            model = pipeline.fit(X_train, y_train_true)
+            dev_pred = model.predict(X_dev)
+            labels = list(np.unique(np.array(y_train_true)))
+            print("Pipe = {}".format(name))
+            for averaging in ['micro', 'macro']:
+                our_recall = our_metrics.recall(y_dev_true, dev_pred, labels=labels, average=averaging)
+                our_precision = our_metrics.precision(y_dev_true, dev_pred, labels=labels, average=averaging)
+                print("\tAveraging = {}\n\t\tRecall = {}\n\t\tPrecision = {}".format(averaging, our_recall, our_precision))
+
+            test_pred = model.predict(X_test)
+            np.savetxt("./test_output/test_output_{}.txt".format(name), np.array(test_pred), fmt='%d')
+
             ##### End of your work ######
 
 
