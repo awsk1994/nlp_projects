@@ -1,8 +1,41 @@
 """Metrics for classification.
 """
 
+'''
+Micro vs Macro average (for multi-class)
+
+# Micro:
+Each tp/fp/tn/fn are summed for all class.
+
+# Macro:
+average(all the class' own precision/recall value)
+
+# Example:
+
+Precision = tp / (tp + fp)
+
+Class A: 1 TP and 1 FP
+Class B: 10 TP and 90 FP
+Class C: 1 TP and 1 FP
+Class D: 1 TP and 1 FP
+
+Precision_A = Precision_C = Precision_D = 0.5, Precision_B = 0.1
+Macro_Ave_Precision = mean(precision of all class) = ((0.5 * 3) + 0.1)/4 = 0.4
+Micro_Ave_Precision = sum(all tp)/sum(all tp + fp) = (1 + 10 + 1 + 1)/(2 + 100 + 2 + 2) = 0.123
+
+Source: https://datascience.stackexchange.com/questions/15989/micro-average-vs-macro-average-performance-in-a-multiclass-classification-settin
+
+'''
+
 import numpy as np
 
+def get_confusion_matrix_val(y_true, y_pred, target):
+    tp = np.sum(np.logical_and((y_pred == target), (y_true == y_pred)))
+    tn = np.sum(np.logical_and((y_true != target), (y_true == y_pred)))
+
+    fp = np.sum(np.logical_and((y_pred == target), (y_true != y_pred)))
+    fn = np.sum(np.logical_and((y_true == target), (y_true != y_pred))) #
+    return tp, tn, fp, fn
 
 def make_onehot(y, labels):
     """Convert y into a one hot format
@@ -99,10 +132,33 @@ def precision(y_true, y_pred, average, labels):
     """
     y_true, y_pred = check_metric_args(y_true, y_pred, average, labels)
 
-    # At this point, you can be sure that y_true and y_pred
-    # are one hot encoded.
-    result = None
     ##### Write code here #######
+
+    if average is None:
+        precisions = []    
+        for l in labels:
+            tp, tn, fp, fn = get_confusion_matrix_val(y_true, y_pred, l)
+            prec_v = tp / (tp + fp)
+            precisions.append(prec_v)
+        result = np.array(precisions)
+    elif average == 'micro':
+        sum_tp, sum_tn, sum_fp, sum_fn = 0, 0, 0, 0
+        for l in labels:
+            tp, tn, fp, fn = get_confusion_matrix_val(y_true, y_pred, l)
+            sum_tp += tp
+            sum_tn += tn
+            sum_fp += fp
+            sum_fn += fn
+        result = sum_tp / (sum_tp + sum_fp)
+    elif average == 'macro':
+        precisions = []
+        for l in labels:
+            tp, tn, fp, fn = get_confusion_matrix_val(y_true, y_pred, l)
+            prec_v = tp / (tp + fp)
+            precisions.append(prec_v)
+        result = np.average(precisions)
+    else:
+        print("ERROR | recall | Unexpected average value ({})".format(average))
 
     ##### End of your work ######
     return result
@@ -132,8 +188,33 @@ def recall(y_true, y_pred, average, labels):
 
     y_true, y_pred = check_metric_args(y_true, y_pred, average, labels)
 
-    result = None
     ##### Write code here #######
+
+    if average is None:
+        recalls = []    
+        for l in labels:
+            tp, tn, fp, fn = get_confusion_matrix_val(y_true, y_pred, l)
+            recall_v = tp / (tp + fn)
+            recalls.append(recall_v)
+        result = np.array(recalls)
+    elif average == 'micro':
+        sum_tp, sum_tn, sum_fp, sum_fn = 0, 0, 0, 0
+        for l in labels:
+            tp, tn, fp, fn = get_confusion_matrix_val(y_true, y_pred, l)
+            sum_tp += tp
+            sum_tn += tn
+            sum_fp += fp
+            sum_fn += fn
+        result = sum_tp / (sum_tp + sum_fn)
+    elif average == 'macro':
+        recalls = []
+        for l in labels:
+            tp, tn, fp, fn = get_confusion_matrix_val(y_true, y_pred, l)
+            recall_v = tp / (tp + fn)
+            recalls.append(recall_v)
+        result = np.average(recalls)
+    else:
+        print("ERROR | recall | Unexpected average value ({})".format(average))
 
     ##### End of your work ######
 
@@ -152,6 +233,21 @@ def test():
 
     true1 = ["blue", "red", "blue", "blue", "blue", "blue", "yellow"]
     pred1 = ["blue", "red", "yellow", "yellow", "red", "red", "red"]
+
+    # recall: tp/(tp + fn)
+
+    # tp:
+    # r: 1
+    # b: 1
+    # y: 0
+
+    # fn:
+    # r: 1, 0
+    # b: 5, 5 (4)
+    # y: 1, 1
+
+    # r = 2/7 = 0.2857
+
 
     for (correct_precision, correct_recall, averaging) in [
         [0.4166666666666667, 0.39999999999999997, "macro"],

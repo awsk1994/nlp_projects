@@ -1,8 +1,18 @@
-import spacy
+import numpy as np
 
-nlp = spacy.load('en')
-doc = nlp("Apple is looking at buying U.K. startup for $1 billion")
+print(np.average(np.array([1,2,3])))
+# y_true = np.array(['a', 'b', 'c', 'a'])
+# y_pred = np.array(['a', 'c', 'c', 'b'])
 
-for ent in doc.ents:
-    print(ent.text, ent.start_char, ent.end_char, ent.label_)
-    print(type(ent.text), type(ent.label_))
+# tp = np.sum(np.logical_and((y_true == 'a'), (y_true == y_pred)))
+# tn = np.sum(np.logical_and((y_true != 'a'), (y_true == y_pred)))
+
+# fp = np.sum(np.logical_and((y_true != 'a'), (y_true != y_pred)))
+# fn = np.sum(np.logical_and((y_true == 'a'), (y_true != y_pred)))
+
+
+
+# '''
+# recall =  TP / (TP + FN)
+
+# '''
