@@ -151,50 +151,60 @@ def output_predictions(pipeline):
     pass
     ##### End of your work ######
 
-# def testing(X_train, y_train_true, X_dev, y_dev_true):
-#     from sklearn.feature_extraction.text import CountVectorizer
-#     from sklearn.feature_extraction.text import TfidfTransformer
-#     from sklearn.naive_bayes import MultinomialNB
+def testing(X_train, y_train_true, X_dev, y_dev_true):
+    from sklearn.feature_extraction.text import CountVectorizer
+    from sklearn.feature_extraction.text import TfidfTransformer
+    from sklearn.naive_bayes import MultinomialNB
 
-#     # Count Vectorizer
-#     train_vectorizer = CountVectorizer()
-#     X_cv_train = train_vectorizer.fit_transform(X_train)
-#     # print(vectorizer.get_feature_names())
-#     # print(X.toarray())
+    # Count Vectorizer
+    train_vectorizer = CountVectorizer()
+    X_cv_train = train_vectorizer.fit_transform(X_train)
+    # print(vectorizer.get_feature_names())
+    # print(X.toarray())
 
-#     # Tfid Transformer
-#     tf_train_transformer = TfidfTransformer().fit(X_cv_train)
-#     X_train_tfidf = tf_train_transformer.transform(X_cv_train)
-#     # print(X_train_tf)
+    # Tfid Transformer
+    tf_train_transformer = TfidfTransformer().fit(X_cv_train)
+    X_train_tfidf = tf_train_transformer.transform(X_cv_train)
+    # print(X_train_tf)
 
-#     # Fit model
-#     print("X_train_tfidf shape", X_train_tfidf.shape)
+    # Fit model
+    print("X_train_tfidf shape", X_train_tfidf.shape)
 
-#     # print(tfidf_transformer.idf_)
-#     # print(cv.get_feature_names())
-#     clf = MultinomialNB().fit(X_train_tfidf, y_train_true)
+    # print(tfidf_transformer.idf_)
+    # print(cv.get_feature_names())
+    clf = MultinomialNB(alpha=0.1).fit(X_train_tfidf, y_train_true)
 
-#     # Predict validation set
-#     # dev_vectorizer = CountVectorizer()
-#     X_cv_dev = train_vectorizer.transform(X_dev)
-#     print("fname", len(train_vectorizer.get_feature_names()))
+    # Predict validation set
+    # dev_vectorizer = CountVectorizer()
+    X_cv_dev = train_vectorizer.transform(X_dev)
+    print("fname", len(train_vectorizer.get_feature_names()))
 
-#     # tf_dev_transformer = TfidfTransformer(use_idf=False).fit(X_cv_dev)
-#     X_dev_tfidf = tf_train_transformer.transform(X_cv_dev)
-#     print(tf_train_transformer.get_params())
+    # tf_dev_transformer = TfidfTransformer(use_idf=False).fit(X_cv_dev)
+    X_dev_tfidf = tf_train_transformer.transform(X_cv_dev)
+    print(tf_train_transformer.get_params())
 
 
-#     predicted = clf.predict(X_dev_tfidf)
+    dev_pred = clf.predict(X_dev_tfidf)
 
-#     np_pred = np.array(predicted)
-#     np_y = np.array(y_dev_true)
-#     print("Predicted:")
-#     print(np_pred)
-#     print("True:")
-#     print(np_y)
+    # np_pred = np.array(predicted)
+    # np_y = np.array(y_dev_true)
+    # print("Predicted:")
+    # print(np_pred)
+    # print("True:")
+    # print(np_y)
 
-#     print("Correct:", np.sum(np_pred == np_y))
-#     print("Wrong", np.sum(np_pred != np_y))
+    # print("Correct:", np.sum(np_pred == np_y))
+    # print("Wrong", np.sum(np_pred != np_y))
+
+    labels = list(np.unique(np.array(y_train_true)))
+
+    print("Pipe = {}".format("Self"))
+    for averaging in ['micro', 'macro']:
+        our_recall = our_metrics.recall(y_dev_true, dev_pred, labels=labels, average=averaging)
+        our_precision = our_metrics.precision(y_dev_true, dev_pred, labels=labels, average=averaging)
+        print("\tAveraging = {}\n\t\tRecall = {}\n\t\tPrecision = {}".format(averaging, our_recall, our_precision))
+
+    # return predicted
 
 # def compare_result(pipe, name, X_dev, y_dev_true):
 #     pred = pipe.predict(X_dev)
@@ -211,7 +221,8 @@ def main():
     bayes_pipeline = build_naive_bayes()
     logistic_pipeline = build_logistic_regr()
 
-    # testing(X_train, y_train_true, X_dev, y_dev_true)
+    testing(X_train, y_train_true, X_dev, y_dev_true)
+    return 
 
     for name, pipeline in (
         ["Naive Bayes", bayes_pipeline,],
@@ -230,6 +241,7 @@ def main():
                 our_precision = our_metrics.precision(y_dev_true, dev_pred, labels=labels, average=averaging)
                 print("\tAveraging = {}\n\t\tRecall = {}\n\t\tPrecision = {}".format(averaging, our_recall, our_precision))
 
+            # output_predictions()
             test_pred = model.predict(X_test)
             np.savetxt("./test_output/test_output_{}.txt".format(name), np.array(test_pred), fmt='%d')
 
