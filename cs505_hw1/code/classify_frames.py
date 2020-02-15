@@ -14,6 +14,7 @@ from sklearn.naive_bayes import ComplementNB
 from sklearn.linear_model import LogisticRegression
 
 import our_metrics
+import math
 
 # Added lib
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -22,6 +23,7 @@ import numpy as np
 
 
 TRAIN_FILE = Path("raw_data/GunViolence/train.tsv")
+TRAIN_BALANCED_FILE = Path("raw_data/GunViolence/train_balanced.tsv")
 DEV_FILE = Path("raw_data/GunViolence/dev.tsv")
 TEST_FILE = Path("raw_data/GunViolence/test.tsv")
 
@@ -69,6 +71,26 @@ def load_data_file(data_file, is_test_file = False):
         )
 
     return (X, y)
+
+def load_balanced_file(data_file):
+    with open(data_file) as f:
+        df = pd.read_csv(f)
+        df_x, df_y = df['x'].tolist(), df['y'].tolist()
+        return df_x, df_y
+
+def balance_class(X, y):
+    df = pd.DataFrame({'x': X, 'y': y})
+    ave = math.floor(np.mean(np.array(list(df.groupby('y').x.count()))))
+
+    def sampling_k_elements(group, k=ave):
+        if len(group) < k:
+            return group
+        return group.sample(k)
+
+    df_bal = df.groupby('y').apply(sampling_k_elements).reset_index(drop=True)
+
+    # print(df_bal['y'].value_counts())
+    return df_bal['x'].to_list(), df_bal['y'].to_list()
 
 def build_naive_bayes():
     """
@@ -183,7 +205,6 @@ def testing(X_train, y_train_true, X_dev, y_dev_true):
     X_dev_tfidf = tf_train_transformer.transform(X_cv_dev)
     print(tf_train_transformer.get_params())
 
-
     dev_pred = clf.predict(X_dev_tfidf)
 
     # np_pred = np.array(predicted)
@@ -214,15 +235,22 @@ def testing(X_train, y_train_true, X_dev, y_dev_true):
 #     print("Wrong", np.sum(np_pred != np_y))
 
 def main():
+    # X_train_bal, y_train_bal_true = load_balanced_file(TRAIN_BALANCED_FILE)
+
     X_train, y_train_true = load_data_file(TRAIN_FILE)
+    # X_train_bal, y_train_bal_true = balance_class(X_train, y_train_true)
+
     X_dev, y_dev_true = load_data_file(DEV_FILE)
     X_test, _ = load_data_file(TEST_FILE, is_test_file=True)
 
     bayes_pipeline = build_naive_bayes()
     logistic_pipeline = build_logistic_regr()
 
-    testing(X_train, y_train_true, X_dev, y_dev_true)
-    return 
+    # print("no bal")
+    # testing(X_train, y_train_true, X_dev, y_dev_true)
+
+    # print("bal")
+    # testing(X_train_bal, y_train_bal_true, X_dev, y_dev_true)
 
     for name, pipeline in (
         ["Naive Bayes", bayes_pipeline,],
@@ -246,7 +274,6 @@ def main():
             np.savetxt("./test_output/test_output_{}.txt".format(name), np.array(test_pred), fmt='%d')
 
             ##### End of your work ######
-
 
 if __name__ == "__main__":
     main()
