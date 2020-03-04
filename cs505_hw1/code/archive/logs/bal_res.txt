@@ -1,0 +1,31 @@
+Loading from train.tsv ...loaded 1040 lines with labels ... done
+Loading from dev.tsv ...loaded 130 lines with labels ... done
+Loading from test.tsv ...loaded 130 lines without labels ... done
+Pipe = Naive Bayes
+	Averaging = micro
+		Recall = 0.6307692307692307
+		Precision = 0.6307692307692307
+	Averaging = macro
+		Recall = 0.5302536157799316
+		Precision = 0.5965089660741835
+Pipe = Logistic Regression
+	Averaging = micro
+		Recall = 0.5769230769230769
+		Precision = 0.5769230769230769
+	Averaging = macro
+		Recall = 0.45222126801074175
+		Precision = 0.6113756613756614
+Pipe = Random Forest
+	Averaging = micro
+		Recall = 0.47692307692307695
+		Precision = 0.47692307692307695
+	Averaging = macro
+		Recall = 0.30752872858136016
+		Precision = 0.2937839350204637
+Pipe = Linear SVC
+	Averaging = micro
+		Recall = 0.6615384615384615
+		Precision = 0.6615384615384615
+	Averaging = macro
+		Recall = 0.5731829087092245
+		Precision = 0.6476817637636351

@@ -12,6 +12,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import ComplementNB
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import SGDClassifier
 
 import our_metrics
 import math
@@ -21,9 +24,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
 import numpy as np
 
-
 TRAIN_FILE = Path("raw_data/GunViolence/train.tsv")
-TRAIN_BALANCED_FILE = Path("raw_data/GunViolence/train_balanced.tsv")
 DEV_FILE = Path("raw_data/GunViolence/dev.tsv")
 TEST_FILE = Path("raw_data/GunViolence/test.tsv")
 
@@ -78,9 +79,13 @@ def load_balanced_file(data_file):
         df_x, df_y = df['x'].tolist(), df['y'].tolist()
         return df_x, df_y
 
-def balance_class(X, y):
+def get_balance_class(X, y):
     df = pd.DataFrame({'x': X, 'y': y})
     ave = math.floor(np.mean(np.array(list(df.groupby('y').x.count()))))
+
+    # ave = 120
+    ave = 150
+    # ave = 170   # Average of top 5.
 
     def sampling_k_elements(group, k=ave):
         if len(group) < k:
@@ -105,13 +110,12 @@ def build_naive_bayes():
 
     nb_pipeline = Pipeline([
         ('vect', CountVectorizer()),
-        ('tfidf', TfidfTransformer()),
-        ('clf', MultinomialNB()),
+        ('tfidf', TfidfTransformer(use_idf=False)),
+        ('clf', MultinomialNB(alpha=0.1)),
     ])
 
     ##### End of your work ######
     return nb_pipeline
-
 
 def build_logistic_regr():
     """
@@ -126,13 +130,36 @@ def build_logistic_regr():
 
     logistic_pipeline = Pipeline([
         ('vect', CountVectorizer()),
-        ('tfidf', TfidfTransformer()),
+        ('tfidf', TfidfTransformer(use_idf=False)),
         ('clf', LogisticRegression(multi_class='ovr')),
     ])
 
     ##### End of your work ######
     return logistic_pipeline
 
+
+def build_random_forest():
+    random_forest_pipeline = Pipeline([
+        ('vect', CountVectorizer()),
+        ('tfidf', TfidfTransformer(use_idf=False)),
+        ('clf', RandomForestClassifier(n_estimators=10, max_depth=10, random_state=0)),
+    ])
+    return random_forest_pipeline
+
+def build_linear_svc():
+    linear_svc_pipeline = Pipeline([
+        ('vect', CountVectorizer()),
+        ('tfidf', TfidfTransformer(use_idf=True)),
+        ('clf', LinearSVC(multi_class='ovr')),
+    ])
+    return linear_svc_pipeline
+
+def build_svc_2():
+    sgd = Pipeline([('vect', CountVectorizer()),
+                ('tfidf', TfidfTransformer(use_idf=False)),
+                ('clf', SGDClassifier(loss='hinge', penalty='l2',alpha=0.0001, random_state=42, max_iter=5, tol=None)),
+               ])
+    return sgd
 
 def build_own_pipeline() -> Pipeline:
     """
@@ -145,11 +172,13 @@ def build_own_pipeline() -> Pipeline:
     pipeline = None
     ##### Write code here #######
 
+    pipeline = build_linear_svc()  
+
     ##### End of your work ######
     return pipeline
 
 
-def output_predictions(pipeline):
+def output_predictions(result):
     """Load test data, predict using given pipeline, and write predictions to file.
 
     The output must be named "predictions.tsv" and must have the following format.
@@ -170,7 +199,9 @@ def output_predictions(pipeline):
 
     """
     ##### Write code here #######
-    pass
+
+    np.savetxt("./predictions.tsv", np.array(result), fmt='%d')
+    
     ##### End of your work ######
 
 def testing(X_train, y_train_true, X_dev, y_dev_true):
@@ -185,7 +216,7 @@ def testing(X_train, y_train_true, X_dev, y_dev_true):
     # print(X.toarray())
 
     # Tfid Transformer
-    tf_train_transformer = TfidfTransformer().fit(X_cv_train)
+    tf_train_transformer = TfidfTransformer(use_idf=False).fit(X_cv_train)
     X_train_tfidf = tf_train_transformer.transform(X_cv_train)
     # print(X_train_tf)
 
@@ -225,43 +256,40 @@ def testing(X_train, y_train_true, X_dev, y_dev_true):
         our_precision = our_metrics.precision(y_dev_true, dev_pred, labels=labels, average=averaging)
         print("\tAveraging = {}\n\t\tRecall = {}\n\t\tPrecision = {}".format(averaging, our_recall, our_precision))
 
-    # return predicted
 
-# def compare_result(pipe, name, X_dev, y_dev_true):
-#     pred = pipe.predict(X_dev)
-#     np_pred, np_y = np.array(pred), np.array(y_dev_true)
-#     print("Pipe name = {}".format(name))
-#     print("Correct:", np.sum(np_pred == np_y))
-#     print("Wrong", np.sum(np_pred != np_y))
-
-def main():
+def main(balance_class=False):
     # X_train_bal, y_train_bal_true = load_balanced_file(TRAIN_BALANCED_FILE)
+    print("balance_class=", balance_class)
 
     X_train, y_train_true = load_data_file(TRAIN_FILE)
-    # X_train_bal, y_train_bal_true = balance_class(X_train, y_train_true)
+    #if balance_class:
+    #    X_train, y_train_true = get_balance_class(X_train, y_train_true)
 
     X_dev, y_dev_true = load_data_file(DEV_FILE)
     X_test, _ = load_data_file(TEST_FILE, is_test_file=True)
 
     bayes_pipeline = build_naive_bayes()
     logistic_pipeline = build_logistic_regr()
-
-    # print("no bal")
-    # testing(X_train, y_train_true, X_dev, y_dev_true)
-
-    # print("bal")
-    # testing(X_train_bal, y_train_bal_true, X_dev, y_dev_true)
+    # random_forest_pipeline = build_random_forest()
+    # linear_svc_pipeline = build_linear_svc()
+    # svc_2_pipe = build_svc_2()
+    own_pipeline = build_own_pipeline()
 
     for name, pipeline in (
         ["Naive Bayes", bayes_pipeline,],
         ["Logistic Regression", logistic_pipeline,],
+        ["Own Pipeline (Linear SVC)", own_pipeline,],
     ):
         if pipeline is not None:
 
             ##### Write code here #######
-
+            # Train model
             model = pipeline.fit(X_train, y_train_true)
+
+            # Predict with Val set
             dev_pred = model.predict(X_dev)
+
+            # Get Metrics
             labels = list(np.unique(np.array(y_train_true)))
             print("Pipe = {}".format(name))
             for averaging in ['micro', 'macro']:
@@ -269,11 +297,14 @@ def main():
                 our_precision = our_metrics.precision(y_dev_true, dev_pred, labels=labels, average=averaging)
                 print("\tAveraging = {}\n\t\tRecall = {}\n\t\tPrecision = {}".format(averaging, our_recall, our_precision))
 
-            # output_predictions()
-            test_pred = model.predict(X_test)
-            np.savetxt("./test_output/test_output_{}.txt".format(name), np.array(test_pred), fmt='%d')
+            if name == "Own Pipeline (Linear SVC)":
+                # Run Test Set
+                test_pred = model.predict(X_test)
+                output_predictions(test_pred)
 
             ##### End of your work ######
 
+    print("\n\n")
 if __name__ == "__main__":
     main()
+    # main(balance_class=True)

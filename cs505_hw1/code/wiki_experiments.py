@@ -46,8 +46,10 @@ def count_things():
     import string
 
     def remove_punctuation_space_from_list(lst_word):
-        nps_regex = re.compile(r"[^{}\s]+".format(string.punctuation))
-        nps_list = list(filter(nps_regex.match, lst_word))
+        nps_list = []
+        for w in lst_word:
+            if w.is_punct == False and w.is_space == False:
+                nps_list.append(nps_list)
         return nps_list
 
     def get_unique_count_from_list(lst_word):

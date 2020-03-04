@@ -1,0 +1,57 @@
+After balancing class at 170.
+
+balance_class= False
+Loading from train.tsv ...loaded 1040 lines with labels ... done
+Loading from dev.tsv ...loaded 130 lines with labels ... done
+Loading from test.tsv ...loaded 130 lines without labels ... done
+Pipe = Naive Bayes
+	Averaging = micro
+		Recall = 0.6
+		Precision = 0.6
+	Averaging = macro
+		Recall = 0.42708290734606524
+		Precision = 0.6931227479473093
+Pipe = Logistic Regression
+	Averaging = micro
+		Recall = 0.6
+		Precision = 0.6
+	Averaging = macro
+		Recall = 0.40313731103204786
+		Precision = 0.5684392794757104
+Pipe = Own Pipeline (Linear SVC)
+	Averaging = micro
+		Recall = 0.6461538461538462
+		Precision = 0.6461538461538462
+	Averaging = macro
+		Recall = 0.5171621750569118
+		Precision = 0.6284770784770785
+
+
+balance_class= True
+Loading from train.tsv ...loaded 1040 lines with labels ... done
+Loading from dev.tsv ...loaded 130 lines with labels ... done
+Loading from test.tsv ...loaded 130 lines without labels ... done
+Pipe = Naive Bayes
+	Averaging = micro
+		Recall = 0.6076923076923076
+		Precision = 0.6076923076923076
+	Averaging = macro
+		Recall = 0.47098685914475386
+		Precision = 0.6793230082237174
+Pipe = Logistic Regression
+	Averaging = micro
+		Recall = 0.5615384615384615
+		Precision = 0.5615384615384615
+	Averaging = macro
+		Recall = 0.4497403181613708
+		Precision = 0.5987513681062068
+Pipe = Own Pipeline (Linear SVC)
+	Averaging = micro
+		Recall = 0.6615384615384615
+		Precision = 0.6615384615384615
+	Averaging = macro
+		Recall = 0.5504556359819518
+		Precision = 0.6296742683839458
+
+
+
