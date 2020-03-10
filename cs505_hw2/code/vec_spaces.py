@@ -1,5 +1,6 @@
 import numpy as np
 from gensim.models import Word2Vec
+import gensim
 
 
 def create_word2vec_matrix(data_loader, min_count=20, size=100, window_size=3):
@@ -39,6 +40,15 @@ def create_word2vec_matrix(data_loader, min_count=20, size=100, window_size=3):
     # NOTE : Your code should not be longer than ~2 lines, excepting the part
     # where build the int to string token mapping(and even that can be a one-liner).
     ####### Your code here ###############
+
+    model = Word2Vec(data_loader, min_count=min_count, window=window_size, size=size)
+    words = list(model.wv.vocab)
+
+    word2vec_id_to_tokens = {}
+    for i in range(len(words)):
+        word2vec_id_to_tokens[i] = words[i]
+
+    word2vec_mat = np.array([model[word] for word in words])
 
     ####### End of your code #############
 
@@ -157,10 +167,26 @@ def create_term_context_matrix(
     """
 
     V = len(id_to_tokens)
-    mat = None
+    mat = np.zeros((V,V), dtype='int')
+    
     ####### Your code here ###############
-    pass
+    
+    for newsgroup_and_token_ids_post in newsgroup_and_token_ids_per_post[:50]: # TODO: remove :50 limiation
+        tokens, _ = newsgroup_and_token_ids_post
+
+        for i in range(len(tokens)):
+            left_limit = max(0, i-window_size)
+            right_limit = min(len(tokens), i+window_size+1)
+
+            current_token = tokens[i]
+            within_window_size_tokens = tokens[left_limit:i] + tokens[i+1:right_limit]
+
+            for within_window_size_token in within_window_size_tokens:
+                mat[current_token, within_window_size_token] += 1
+                # mat[within_window_size_token, current_token] += 1
+
     ####### End of your code #############
+    
     return mat
 
 
@@ -196,26 +222,37 @@ def compute_cosine_similarity(a, B):
     ####### End of your code #############
 
 
-def compute_jaccard_similarity(a, B):
+def compute_jaccard_similarity(a, B):   # TODO: untested
     """
 
     Arguments
     ---------
-        a: `np.ndarray`, (M,)
-        B: `np.ndarray`, (N, M)
+        a: `np.ndarray`, (M,)       # doc
+        B: `np.ndarray`, (N, M)     # (token, doc)
 
     Returns
     -------
-        `np.ndarray` (N,)
+        `np.ndarray` (N,)           # token
             The Jaccard similarity between a and every
             row in B.
     """
     ####### Your code here ###############
-    pass
+    def jaccard_similarity(list1, list2):
+        intersection = len(list(set(list1).intersection(list2)))
+        union = (len(list1) + len(list2)) - intersection
+        return float(intersection) / union    
+
+    ans = np.zeros((B.shape[0]))
+    for b_idx in range(B.shape[0]):
+        b = B[b_idx]    # len(b) = M ()
+        ans[b_idx] = jaccard_similarity(a,b) # result shape = (N)
+
+    return ans
+
     ####### End of your code #############
 
 
-def compute_dice_similarity(a, B):
+def compute_dice_similarity(a, B):  # TODO: untested
     """
 
     Arguments
@@ -230,6 +267,18 @@ def compute_dice_similarity(a, B):
             row in B.
     """
     ####### Your code here ###############
-    pass
+    
+    def dice_sim(list1, list2):
+        intersection = len(list(set(list1).intersection(list2)))
+        sim = (2 * intersection) / (len(list1) + len(list2))
+        return sim
+
+    ans = np.zeros((B.shape[0]))
+    for b_idx in range(B.shape[0]):
+        b = B[b_idx]    # len(b) = M ()
+        ans[b_idx] = dice_sim(a,b) # result shape = (N)
+
+    return ans
+
     ####### End of your code #############
 
