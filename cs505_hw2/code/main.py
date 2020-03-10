@@ -48,7 +48,7 @@ def test_newsgroup_similarity(
         largest_sim, largest_sim_idx = second_largest, second_largest_idx # because, first largest is itself.
         # print("test_newsgroup_similarity | largest_sim={}, idx={}".format(largest_sim, largest_sim_idx))
         most_sims[newsgroup_idx] = largest_sim_idx
-    print("newsgroup that yields the highest similarity score for each newsgroup = ", most_sims)
+    print("test_newsgroup_similarity | newsgroup that yields the highest similarity score for each newsgroup = ", most_sims)
     ####### End of your code #############
 
 def test_word_similarity(
@@ -72,7 +72,7 @@ def test_word_similarity(
     """
 
     ####### Your code here ###############
-    max_token_len = 50  # first 50 (TODO: improve this later)
+    max_token_len = 100  # first 50 (TODO: improve this later)
     tokens_len = max_token_len # len(id_to_tokens.keys())
     most_sims = np.zeros(tokens_len, dtype='int')
     token_newsgroup_mat = mat[:max_token_len]
@@ -96,9 +96,8 @@ def test_word_similarity(
         largest_sim, largest_sim_idx = second_largest, second_largest_idx # because, first largest is itself.
         # print("test_newsgroup_similarity | largest_sim={}, idx={}".format(largest_sim, largest_sim_idx))
         most_sims[token_idx] = largest_sim_idx
-    print("tokens that yields the highest similarity score for each tokens = ", most_sims)
+    print("test_word_similarity | tokens that yields the highest similarity score for each tokens = ", most_sims)
     ####### End of your code #############
-
 
 def test_word2vec_similarity(
     mat, id_to_tokens, sim_func=vec_spaces.compute_cosine_similarity
@@ -121,7 +120,7 @@ def test_word2vec_similarity(
     """
     ####### Your code here ###############
 
-    max_token_len = 50  # first 50 (TODO: improve this later)
+    max_token_len = 100  # first 50 (TODO: improve this later)
     tokens_len = max_token_len # len(id_to_tokens.keys())
     mat = mat[:max_token_len]
     sim_hash = {}
@@ -131,7 +130,7 @@ def test_word2vec_similarity(
         similarities = sim_func(mat[token_id], mat)    # mat = (vocab x dimension), sims = (vocab)
         
         if token_id == 0:
-            print("token_id = {} ({}), similarities = {}".format(token_id, id_to_tokens[token_id], similarities))
+            print("test_word2vec_similarity | token_id = {} ({}), similarities = {}".format(token_id, id_to_tokens[token_id], similarities))
 
         # Get second largest newsgroup
         largest, largest_idx = None, None
@@ -148,12 +147,12 @@ def test_word2vec_similarity(
 
         curr_token = id_to_tokens[token_id]
         sim_hash[curr_token] = largest_sim
-    print("tokens that yields the highest similarity score for each tokens = ", sim_hash)
+    print("test_word2vec_similarity | tokens that yields the highest similarity score for each tokens = ", sim_hash)
 
     ####### End of your code #############
 
 
-def debug_test_word2vec_similarity(
+def manual_debug_test_word2vec_similarity(
     mat, id_to_tokens
 ):
     """
@@ -183,60 +182,62 @@ def debug_test_word2vec_similarity(
             if word2vec_id_to_tokens[key] == target:
                 print("{}, {}".format(target, key))
                 return key
-        print("ERROR - cannot find")
+        print("ERROR - cannot find target({})".format(target))
 
     def compare(a,b, word2vec_mat, word2vec_id_to_tokens):
         dist = cosine_sim(word2vec_mat[get_id(a, word2vec_id_to_tokens)], word2vec_mat[get_id(b, word2vec_id_to_tokens)])
         print("compare {} and {} => {}".format(a,b,dist))
 
-    print("DEBUG | debug_test_word2vec_similarity")
-
+    print("manual_debug_test_word2vec_similarity | Start")
     compare("talking", "about", mat, id_to_tokens)
     compare("talking", "bad", mat, id_to_tokens)
     compare("good", "about", mat, id_to_tokens)
     compare("bad", "good", mat, id_to_tokens)
     compare("good", "john", mat, id_to_tokens)
     compare("buffalo", "university", mat, id_to_tokens)
+    print("manual_debug_test_word2vec_similarity | Done")
 
     ####### End of your code #############
 
 def main():
-    # ####### Your code here ###############
-    # # Read Data
-    # data = read_processed_data()
-    # newsgroup_and_token_ids_per_post = data['newsgroup_and_token_ids_per_post']
+    ####### Your code here ###############
+    # Read Data
+    data = read_processed_data()
+    print("1. Data loaded.")
 
-    # # print("newsgroup_and_token_ids_per_post")
-    # # print(newsgroup_and_token_ids_per_post[:50])
-    
-    # id_to_tokens = data['id_to_tokens']
-    # id_to_newsgroups = data['id_to_newsgroups']
+    newsgroup_and_token_ids_per_post = data['newsgroup_and_token_ids_per_post']
+    id_to_tokens = data['id_to_tokens']
+    id_to_newsgroups = data['id_to_newsgroups']
 
-    # # Create term_newsgroup_mat
-    # term_newsgroup_mat = vec_spaces.create_term_newsgroup_matrix(newsgroup_and_token_ids_per_post, id_to_tokens, id_to_newsgroups)
+    # Create term_newsgroup_mat
+    term_newsgroup_mat = vec_spaces.create_term_newsgroup_matrix(newsgroup_and_token_ids_per_post, id_to_tokens, id_to_newsgroups)
+    print("2. Created term_newsgroup_mat")
 
-    # # print("term_newsgroup_mat")
-    # # print(term_newsgroup_mat[:50])
+    # Create term_context_mat
+    term_context_mat = vec_spaces.create_term_context_matrix(newsgroup_and_token_ids_per_post, id_to_tokens, id_to_newsgroups, ppmi_weighing=False, window_size=5)
+    print("3. Created term_context_mat")
 
-    # # Test newsgroup similarities
-    # test_newsgroup_similarity(term_newsgroup_mat, id_to_newsgroups)
+    # Newsgroup similarities
+    print("4. Test Newsgroup similarities.")
+    test_word_similarity(term_newsgroup_mat, id_to_tokens, sim_func = vec_spaces.compute_jaccard_similarity)        # Jaccard
+    test_word_similarity(term_newsgroup_mat, id_to_tokens, sim_func = vec_spaces.compute_dice_similarity)        # Dice
+    test_word_similarity(term_newsgroup_mat, id_to_tokens, sim_func = vec_spaces.compute_cosine_similarity)        # Cosine
 
-    # # Test word similarities
-    # test_word_similarity(term_newsgroup_mat, id_to_tokens)
-
-    # # Create term_context_mat
-    # term_context_mat = vec_spaces.create_term_context_matrix(newsgroup_and_token_ids_per_post, id_to_tokens, id_to_newsgroups, ppmi_weighing=False, window_size=5)
-    # print("term_context_mat Created...")
-
-    # # Test word similarities
-    # test_word_similarity(term_context_mat, id_to_tokens)
+    # Context similarities
+    print("5. Test Context similarities.")
+    test_word_similarity(term_context_mat, id_to_tokens, sim_func = vec_spaces.compute_jaccard_similarity)          # context similarity
+    test_word_similarity(term_context_mat, id_to_tokens, sim_func = vec_spaces.compute_dice_similarity)        # Dice
+    test_word_similarity(term_context_mat, id_to_tokens, sim_func = vec_spaces.compute_cosine_similarity)        # Cosine
 
     # word2vec
+    print("6. Test Word2Vec")
     dataset = list(DataLoader())
     list_of_list = [data[0] for data in dataset]
     word2vec_mat, word2vec_id_to_tokens = vec_spaces.create_word2vec_matrix(list_of_list)
+    manual_debug_test_word2vec_similarity(word2vec_mat, word2vec_id_to_tokens)
     test_word2vec_similarity(word2vec_mat, word2vec_id_to_tokens, sim_func=vec_spaces.compute_cosine_similarity)
-    debug_test_word2vec_similarity(word2vec_mat, word2vec_id_to_tokens)
+
+    print("Program Ended.")
 
     ####### End of your code #############
 
