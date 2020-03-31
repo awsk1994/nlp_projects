@@ -103,7 +103,7 @@ def create_term_newsgroup_matrix(
     """
 
     V = len(id_to_tokens)
-    D = len(id_to_newsgroups)
+    D = len(id_to_newsgroups)   # = nums of docs/newsgroups
 
     mat = np.zeros((V, D), dtype='int')
     ####### Your code here ###############
@@ -112,10 +112,16 @@ def create_term_newsgroup_matrix(
         for token_id in token_ids:
             mat[token_id, newsgroup_id] += 1
 
+    if tf_idf_weighing: # TODO: test
+        mat = np.asarray(mat, dtype='float')
+        for token_id in range(mat.shape[0]):
+            token_row = mat[token_id]
+            df = np.sum(token_row > 0)  # number of documents(newsgroups) containing token
+            idf = np.log(D / df)
+            mat[token_id] *= idf
     ####### End of your code #############
 
     return mat
-
 
 def create_term_context_matrix(
     newsgroup_and_token_ids_per_post,
@@ -171,7 +177,7 @@ def create_term_context_matrix(
     
     ####### Your code here ###############
     
-    for newsgroup_and_token_ids_post in newsgroup_and_token_ids_per_post[:50]: # TODO: remove :50 limiation
+    for newsgroup_and_token_ids_post in newsgroup_and_token_ids_per_post:
         tokens, _ = newsgroup_and_token_ids_post
 
         for i in range(len(tokens)):
@@ -183,7 +189,18 @@ def create_term_context_matrix(
 
             for within_window_size_token in within_window_size_tokens:
                 mat[current_token, within_window_size_token] += 1
-                # mat[within_window_size_token, current_token] += 1
+                mat[within_window_size_token, current_token] += 1   # TODO: confirm need?
+
+    if ppmi_weighing:
+        # Generate P(w)
+        vocab_prob = np.zeros((mat.shape[0]))
+        for i in range(mat.shape[0]):
+            vocab_prob[i] = np.sum(mat[i,:])
+
+        for i in range(mat.shape[0]):
+            for j in range(mat.shape[1]):
+                log_term = mat[i,j] / (vocab_prob[i] * vocab_prob[j])
+                mat[i,j] = np.log(log_term) if log_term > 0 else 0
 
     ####### End of your code #############
     
