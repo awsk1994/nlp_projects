@@ -70,7 +70,6 @@ if __name__ == "__main__":
             train_feats.append(feats)
             train_labels.append(sent[i][-1])
 
-
     vectorizer = DictVectorizer()
     X_train = vectorizer.fit_transform(train_feats)
 

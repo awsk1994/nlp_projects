@@ -61,13 +61,28 @@ def gen_trans_mat(data, n_components):
 def get_start_prob_mat(data, n_components):
     pass
 
-def predict(model, seq, n_obs, hidden_state_id_to_hidden_state_map):
+def calc_score(lst_a, lst_b):
+    score = 0
+    total = 0
+    for i in range(len(lst_a)):
+        if lst_a[i] == lst_b[i]:
+            score += 1
+        total += 1
+    print("score/total = {}/{} = {}".format(score, total, score/total))
+    return score/total
+
+def predict(model, seq, n_obs, hidden_state_id_to_hidden_state_map, obs_id_to_obs_map, OBS_IDX):
     # Generate fit X
     X = np.zeros((len(seq), n_obs), dtype=int)
     for i in range(len(seq)):
         word = seq[i]
-        obs_id = obs_to_obs_id_map[word[1]]
+        obs_id = obs_to_obs_id_map[word[OBS_IDX]]
         X[i][obs_id] += 1
+
+    print("len(seq)=")
+    print(len(seq))
+    print("X")
+    print(X)
     X = X.reshape((X.shape[0] * X.shape[1], 1))
     
     # Fit and Predict
@@ -75,21 +90,21 @@ def predict(model, seq, n_obs, hidden_state_id_to_hidden_state_map):
     logprob, raw_preds = model.decode(X, algorithm="viterbi")  # alice_hears -> hidden_state
 
     # Process Prediction
-    print("len(seq)={}, n_obs={}".format(len(seq), n_obs))
-    print("raw_preds shape (before split) = ", raw_preds.shape)
+    # print("len(seq)={}, n_obs={}".format(len(seq), n_obs))
+    # print("raw_preds shape (before split) = ", raw_preds.shape)
 
     raw_preds = np.split(raw_preds, len(seq))
     print(raw_preds)
-    print("raw_preds shape. rows = {}, num_elem_per_row = {}, {} ".format(len(raw_preds), len(raw_preds[0]), len(raw_preds[-1])))
+    # print("raw_preds shape. rows = {}, num_elem_per_row = {}, {} ".format(len(raw_preds), len(raw_preds[0]), len(raw_preds[-1])))
     
     pred_arr = []
     for raw_pred in raw_preds:
-        hidden_state_id = np.argwhere(np.array(raw_pred) == 1)[0][0]
+        obs_id = np.argmax(np.array(raw_pred))
 
-        print("hidden_state_id={}".format(hidden_state_id))
+        # print("obs_id={}".format(obs_id))
 
-        hidden_state = hidden_state_id_to_hidden_state_map[hidden_state_id]
-        pred_arr.append(hidden_state)
+        obs = obs_id_to_obs_map[obs_id]
+        pred_arr.append(obs)
 
     return pred_arr
 
@@ -113,20 +128,23 @@ if __name__ == "__main__":
 
     # TODO: start as transition prob?
 
+    HIDDEN_STATE_IDX = 1
+    OBS_IDX = 2
+
     # Count number of hidden_state and number of observations
     for sent in train_sents:    # TODO: can do with set, no need hash
         # print("sent:", sent, ", send_len:", len(sent))  # sent = [('Comisión', 'NC', 'B-ORG'), ('Europea', 'AQ', 'I-ORG'), (',', 'Fc', 'O'), ...]
         for word in sent:
             # word = ('Comisión', 'NC', 'B-ORG')
-            if word[2] in hidden_state_count_hash:
-                hidden_state_count_hash[word[2]] += 1
+            if word[1] in hidden_state_count_hash:
+                hidden_state_count_hash[word[HIDDEN_STATE_IDX]] += 1
             else:
-                hidden_state_count_hash[word[2]] = 1
+                hidden_state_count_hash[word[HIDDEN_STATE_IDX]] = 1
 
-            if word[1] in obs_count_hash:
-                obs_count_hash[word[1]] += 1
+            if word[2] in obs_count_hash:
+                obs_count_hash[word[OBS_IDX]] += 1
             else:
-                obs_count_hash[word[1]] = 1
+                obs_count_hash[word[OBS_IDX]] = 1
 
     hidden_state_count_sum = sum(hidden_state_count_hash.values())
     n_hidden_state = len(list(hidden_state_count_hash.keys()))
@@ -150,20 +168,25 @@ if __name__ == "__main__":
         obs_val = list(obs_count_hash.keys())[i]
         obs_to_obs_id_map[obs_val] = i
 
+    obs_id_to_obs_map = {}
+    for i in range(len(obs_count_hash.keys())):
+        obs_val = list(obs_count_hash.keys())[i]
+        obs_id_to_obs_map[i] = obs_val
+
     # Generate start_prob and transition count matrix
     trans_count_mat = np.zeros((n_hidden_state, n_hidden_state))
     start_prob_count_mat = np.zeros((n_hidden_state))
 
     for sent in train_sents:
         # Aggregate trans_count_mat on first word (sent[0])
-        hidden_state_val = sent[0][2]
+        hidden_state_val = sent[0][HIDDEN_STATE_IDX]
         hidden_state_id = hidden_state_to_hidden_state_id_map[hidden_state_val]
         start_prob_count_mat[hidden_state_id] += 1
 
         prev_hidden_state_id = None
 
         for word in sent:
-            hidden_state_val = word[2]
+            hidden_state_val = word[HIDDEN_STATE_IDX]
             hidden_state_id = hidden_state_to_hidden_state_id_map[hidden_state_val]
 
             if prev_hidden_state_id != None: # Skip first word for now. TODO: consider adding one more hidden_state '$' indicating start of phrase.
@@ -199,8 +222,8 @@ if __name__ == "__main__":
     emission_count_mat = np.zeros((n_hidden_state, n_obs))
     for sent in train_sents:
         for word in sent:
-            hidden_state = word[2]
-            obs = word[1]
+            hidden_state = word[HIDDEN_STATE_IDX]
+            obs = word[OBS_IDX]
 
             hidden_state_id = hidden_state_to_hidden_state_id_map[hidden_state]
             obs_id = obs_to_obs_id_map[obs]
@@ -221,16 +244,27 @@ if __name__ == "__main__":
     model.transmat = trans_mat
     model.emissionprob = emission_mat
 
+    scores = []
+    errors = []
+    for i in range(len(dev_sents)):
+    # for sent in train_sents[5:10]:
+        print("i={}".format(i))
+        sent = dev_sents[i]
 
-    for sent in train_sents[5:10]:
-        y_pred = predict(model, sent, n_obs, hidden_state_id_to_hidden_state_map)
-        ans = [w[2] for w in sent]
-        print("y_pred={}\nans={}\n\n\n======".format(y_pred, ans))
+        # try:        
+        y_pred = predict(model, sent, n_obs, hidden_state_id_to_hidden_state_map, obs_id_to_obs_map, OBS_IDX)
+        ans = [w[OBS_IDX] for w in sent]
+        print("y_pred={}\nans={}".format(y_pred, ans))
+        score = calc_score(y_pred, ans)
+        scores.append(score)
+        print("\n\n\n======\n\n")
+        # except ValueError:
+        #     errors.append(i)
+        #     print("Error - skip")
 
-
-
-
-
+    print("DONE!")
+    print("Average accuracy = {}".format(np.mean(np.array(scores))))
+    print("Errors = {}, count = {}".format(errors, len(errors)))
 
     # print("pred_arr=", pred_arr)
     # print("ans_arr=", [w[2] for w in train_sents[0]])

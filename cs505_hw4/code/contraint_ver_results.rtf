@@ -1,7 +1,12 @@
 {\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf830
-{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset0 HelveticaNeue;}
-{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red255\green255\blue255;}
-{\*\expandedcolortbl;;\csgray\c0;\csgray\c100000;}
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset0 HelveticaNeue;\f2\fnil\fcharset136 PingFangTC-Regular;
+\f3\fnil\fcharset0 Consolas;\f4\fnil\fcharset0 HelveticaNeue-Medium;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red255\green255\blue255;\red27\green31\blue34;
+\red21\green23\blue26;\red255\green255\blue255;\red27\green31\blue34;\red21\green23\blue26;\red10\green77\blue204;
+\red10\green77\blue204;}
+{\*\expandedcolortbl;;\csgray\c0;\csgray\c100000;\cssrgb\c14118\c16078\c18039;
+\cssrgb\c10588\c12157\c13725\c4706;\cssrgb\c100000\c100000\c100000;\cssrgb\c14118\c16078\c18039;\cssrgb\c10588\c12157\c13725\c4706;\cssrgb\c1176\c40000\c83922;
+\cssrgb\c1176\c40000\c83922;}
 \margl1440\margr1440\vieww10800\viewh8400\viewkind0
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
@@ -41,4 +46,104 @@ accuracy:  99.57%; precision:  93.29%; recall:  94.58%; FB1:  93.93\
 \f1\fs26 \cf0 \cb1 \CocoaLigature1 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl-380\pardirnatural\partightenfactor0
 \cf0 \
+\
+HMM
+\f2 . iter=10:
+\f1 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \cb3 \CocoaLigature0 processed 52923 tokens with 4351 phrases; found: 34094 phrases; correct: 302.\
+accuracy:  12.46%; precision:   0.89%; recall:   6.94%; FB1:   1.57\
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00  667\
+              LOC: precision:   2.16%; recall:   4.47%; FB1:   2.91  2041\
+             MISC: precision:   0.20%; recall:   4.49%; FB1:   0.38  9977\
+              ORG: precision:   2.12%; recall:  10.88%; FB1:   3.55  8724\
+              PER: precision:   0.42%; recall:   4.34%; FB1:   0.76  12685\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl-380\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf0 \cb1 \CocoaLigature1 HMM. iter = 100\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \cb3 \CocoaLigature0 processed 52923 tokens with 4351 phrases; found: 42205 phrases; correct: 699.\
+accuracy:  15.13%; precision:   1.66%; recall:  16.07%; FB1:   3.00\
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00  3467\
+              LOC: precision:   0.63%; recall:   3.35%; FB1:   1.06  5268\
+             MISC: precision:   0.00%; recall:   0.00%; FB1:   0.00  9911\
+              ORG: precision:   4.53%; recall:  33.29%; FB1:   7.97  12498\
+              PER: precision:   0.90%; recall:   8.18%; FB1:   1.63  11061
+\f1\fs26 \cf0 \cb1 \CocoaLigature1 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl-380\pardirnatural\partightenfactor0
+\cf0 \
+\
+HMM (tidied). iter=10:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \cb3 \CocoaLigature0 processed 52923 tokens with 4351 phrases; found: 40787 phrases; correct: 484.\
+accuracy:  12.51%; precision:   1.19%; recall:  11.12%; FB1:   2.14\
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00  3562\
+              LOC: precision:   0.74%; recall:   4.67%; FB1:   1.28  6192\
+             MISC: precision:   0.14%; recall:   1.12%; FB1:   0.25  3524\
+              ORG: precision:   2.34%; recall:  16.29%; FB1:   4.09  11832\
+              PER: precision:   1.00%; recall:  12.77%; FB1:   1.85  15677\
+
+\f1\fs26 \cf0 \cb1 \CocoaLigature1 \
+(no take account of first trans)\
+
+\f0\fs22 \cf2 \cb3 \CocoaLigature0 processed 52923 tokens with 4351 phrases; found: 45311 phrases; correct: 482.\
+accuracy:   6.80%; precision:   1.06%; recall:  11.08%; FB1:   1.94\
+              LOC: precision:   0.90%; recall:   9.76%; FB1:   1.64  10710\
+             MISC: precision:   0.35%; recall:   5.84%; FB1:   0.65  7527\
+              ORG: precision:   1.67%; recall:  13.65%; FB1:   2.98  13887\
+              PER: precision:   0.97%; recall:  10.47%; FB1:   1.78  13187\
+
+\f1\fs26 \cf0 \cb1 \CocoaLigature1 \
+model-init-param=\'91e\'92, account_first_transition=0, hmm5\
+
+\f0\fs22 \cf2 \cb3 \CocoaLigature0 processed 52923 tokens with 4351 phrases; found: 5022 phrases; correct: 48.\
+accuracy:  34.57%; precision:   0.96%; recall:   1.10%; FB1:   1.02\
+              LOC: precision:   0.42%; recall:   0.41%; FB1:   0.41  951\
+             MISC: precision:   0.00%; recall:   0.00%; FB1:   0.00  796\
+              ORG: precision:   0.68%; recall:   0.65%; FB1:   0.66  1612\
+              PER: precision:   1.98%; recall:   2.70%; FB1:   2.29  1663\
+
+\f1\fs26 \cf0 \cb1 \CocoaLigature1 \
+no fit:\
+
+\f0\fs22 \cf2 \cb3 \CocoaLigature0 processed 52923 tokens with 4351 phrases; found: 52182 phrases; correct: 822.\
+accuracy:   3.35%; precision:   1.58%; recall:  18.89%; FB1:   2.91\
+              LOC: precision:   1.48%; recall:  78.35%; FB1:   2.90  52127\
+             MISC: precision:  60.00%; recall:   0.67%; FB1:   1.33  5\
+              ORG: precision:  97.30%; recall:   2.12%; FB1:   4.15  37\
+              PER: precision:  92.31%; recall:   0.98%; FB1:   1.94  13
+\f1\fs26 \cf0 \cb1 \CocoaLigature1 \
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl-380\pardirnatural\partightenfactor0
+\cf0 BERT:\
+train:\
+\pard\pardeftab720\sl320\sa320\partightenfactor0
+
+\f3\fs27\fsmilli13600 \cf4 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 python run_ner.py --data_dir=
+\f0\fs22 \cf2 \cb3 \kerning1\expnd0\expndtw0 \CocoaLigature0 \outl0\strokewidth0 ../../Grad_School/Spring\\ 2020/CS505/cs505_hw4/code/data
+\f3\fs27\fsmilli13600 \cf4 \cb5 \expnd0\expndtw0\kerning0
+\CocoaLigature1 \outl0\strokewidth0 \strokec4  --bert_model=bert-base-cased --task_name=ner --output_dir=out_base --max_seq_length=128 --do_train --num_train_epochs 5 --do_eval --warmup_proportion=0.1
+\f1\fs32 \cb6 \
+\pard\pardeftab720\sl320\sa320\partightenfactor0
+
+\f3\fs27\fsmilli13600 \cf7 \cb8 \outl0\strokewidth0 python run_ner.py --data_dir=
+\f0\fs22 \cf2 \cb3 \kerning1\expnd0\expndtw0 \CocoaLigature0 data
+\f3\fs27\fsmilli13600 \cf7 \cb8 \expnd0\expndtw0\kerning0
+\CocoaLigature1  --bert_model=bert-base-cased --task_name=ner --output_dir=out_base --max_seq_length=128 --do_train --num_train_epochs 5 --do_eval --warmup_proportion=0.1
+\f4\b\fs48 \cf9 \cb1 \outl0\strokewidth0 \strokec9 \
+\pard\pardeftab720\sl480\partightenfactor0
+\cf9 \
+\\n\\n[^\\n ]*\\s[^\\n ]*\\sO\
+[^\\n ]
+\f1 \cf10 \outl0\strokewidth0 +
+\f4 \cf9 \outl0\strokewidth0 \strokec9 \\s[^\\n ]
+\f1 \cf10 \outl0\strokewidth0 +
+\f4 \cf9 \outl0\strokewidth0 \strokec9 \\s(O)\\n[^\\n ]+\\s[^\\n ]
+\f1 \cf10 \outl0\strokewidth0 +
+\f4 \cf9 \outl0\strokewidth0 \strokec9 \\s(B-LOC)\
 }
