@@ -14,14 +14,12 @@ def getfeats(word, o, isPER, isLOC, isORG, isMISC):
     word """
     o = str(o)
 
-    # print("word:", word, ", isMISC:", isMISC)
     features = [
         (o + "word", word),
-        (o + "word_isPER", str(isPER)),
-        (o + "word_isLOC", str(isLOC)),
-        (o + "word_isORG", str(isORG)),
-        (o + "word_isMISC", str(isMISC))
-        # TODO: add more features here.
+        # (o + "word_isPER", str(isPER)),
+        # (o + "word_isLOC", str(isLOC)),
+        # (o + "word_isORG", str(isORG)),
+        # (o + "word_isMISC", str(isMISC))
     ]
     # print(features)
     return features
@@ -39,14 +37,19 @@ def word2features(sent, i):
         if i + o >= 0 and i + o < len(sent):
 
             word = sent[i + o][0]
+
             if sent[i + o][-1] == "B-PER" or sent[i + o][-1] == "I-PER":
                 isPER = True
+                isLOC, isORG, isMISC = False, False, False
             if sent[i + o][-1] == "B-LOC" or sent[i + o][-1] == "I-LOC":
                 isLOC = True
+                isPER, isORG, isMISC = False, False, False
             if sent[i + o][-1] == "B-ORG" or sent[i + o][-1] == "I-ORG":
                 isORG = True
+                isLOC, isPER, isMISC = False, False, False
             if sent[i + o][-1] == "B-MISC" or sent[i + o][-1] == "I-MISC":
                 isMISC = True
+                isLOC, isPER, isORG = False, False, False
 
             featlist = getfeats(word, o, isPER, isLOC, isORG, isMISC)
             features.extend(featlist)

@@ -2,247 +2,236 @@ from nltk.corpus import conll2002
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import Perceptron
 from sklearn.metrics import precision_recall_fscore_support
-from hmmlearn.hmm import GaussianHMM
+import hmmlearn.hmm as hmm
 import numpy as np
+import random
+
 # Assignment 4: NER
 # This is just to help you get going. Feel free to
 # add to or modify any part of it.
 
+class CALC_N_HIDDEN_STATE_OBS:
+    @staticmethod
+    def gen_hidden_state_and_obs_count_and_mapping(train_sents):
+        if DEBUG == 1:
+            print("Generating hidden state and observation data structures...")
+        hidden_state_count_hash, obs_count_hash, n_hidden_state, n_obs = CALC_N_HIDDEN_STATE_OBS.count_hidden_state_and_obs(train_sents)
+        hidden_state_to_hidden_state_id_map, hidden_state_id_to_hidden_state_map = CALC_N_HIDDEN_STATE_OBS.gen_obj_id_mapping(hidden_state_count_hash)
+        obs_to_obs_id_map, obs_id_to_obs_map = CALC_N_HIDDEN_STATE_OBS.gen_obj_id_mapping(obs_count_hash)
+        return hidden_state_to_hidden_state_id_map, hidden_state_id_to_hidden_state_map, obs_to_obs_id_map, obs_id_to_obs_map, n_hidden_state, n_obs
 
-def getfeats(word, o, isPER, isLOC, isORG, isMISC):
-    """ This takes the word in question and
-    the offset with respect to the instance
-    word """
-    o = str(o)
+    @staticmethod
+    def count_hidden_state_and_obs(train_sents):
+        hidden_state_count_hash = {}
+        obs_count_hash = {}
 
-    # print("word:", word, ", isMISC:", isMISC)
-    features = [
-        (o + "word", word),
-        (o + "word_isPER", str(isPER)),
-        (o + "word_isLOC", str(isLOC)),
-        (o + "word_isORG", str(isORG)),
-        (o + "word_isMISC", str(isMISC))
-        # TODO: add more features here.
-    ]
-    # print(features)
-    return features
+        for sent in train_sents:    # TODO: can do with set, no need hash
+            for word in sent:
+                if word[HIDDEN_STATE_IDX] in hidden_state_count_hash:
+                    hidden_state_count_hash[word[HIDDEN_STATE_IDX]] += 1
+                else:
+                    hidden_state_count_hash[word[HIDDEN_STATE_IDX]] = 1
 
+                if word[OBS_IDX] in obs_count_hash:
+                    obs_count_hash[word[OBS_IDX]] += 1
+                else:
+                    obs_count_hash[word[OBS_IDX]] = 1
 
-def word2features(sent, i):
-    """ The function generates all features
-    for the word at position i in the
-    sentence."""
-    features = []
-    # the window around the token
+        n_hidden_state = len(list(hidden_state_count_hash.keys()))
+        n_obs = len(list(obs_count_hash.keys()))
 
-    isPER, isLOC, isORG, isMISC = False, False, False, False
-    for o in [-1, 0, 1]:    # TODO: Add plus -2, 2
-        if i + o >= 0 and i + o < len(sent):
+        if DEBUG_DATA == 1:
+            print("Hidden states len = {}, Observations len = {}".format(len(hidden_state_count_hash.keys()), len(obs_count_hash.keys())))
 
-            word = sent[i + o][0]
-            if sent[i + o][-1] == "B-PER" or sent[i + o][-1] == "I-PER":
-                isPER = True
-            if sent[i + o][-1] == "B-LOC" or sent[i + o][-1] == "I-LOC":
-                isLOC = True
-            if sent[i + o][-1] == "B-ORG" or sent[i + o][-1] == "I-ORG":
-                isORG = True
-            if sent[i + o][-1] == "B-MISC" or sent[i + o][-1] == "I-MISC":
-                isMISC = True
+        return hidden_state_count_hash, obs_count_hash, n_hidden_state, n_obs
+  
+    @staticmethod
+    def gen_obj_id_mapping(obj_hash):
+        obj_to_obj_id_map = {}
+        obj_id_to_obj_map = {}
 
-            featlist = getfeats(word, o, isPER, isLOC, isORG, isMISC)
-            features.extend(featlist)
+        for i in range(len(obj_hash.keys())):
+            obj = list(obj_hash.keys())[i]
+            obj_to_obj_id_map[obj] = i
+            obj_id_to_obj_map[i] = obj
 
-    return dict(features)
+        return obj_to_obj_id_map, obj_id_to_obj_map
 
-def gen_trans_mat(data, n_components):
-    pass
+class CALC_START_TRANS_MAT:
+    @staticmethod
+    def gen_start_and_transition_mat(train_sents, n_hidden_state, hidden_state_to_hidden_state_id_map):
+        if DEBUG == 1:
+            print("Generating start and trans mat...")
+        start_prob_count_mat, trans_count_mat = CALC_START_TRANS_MAT.count_start_transition_prob_mat(train_sents, n_hidden_state, hidden_state_to_hidden_state_id_map)
+        start_prob_mat, trans_mat = CALC_START_TRANS_MAT.calc_start_trans_prob(start_prob_count_mat, trans_count_mat)
+        return start_prob_mat, trans_mat
 
-def get_start_prob_mat(data, n_components):
-    pass
+    @staticmethod
+    def count_start_transition_prob_mat(train_sents, n_hidden_state, hidden_state_to_hidden_state_id_map):
+        if DEBUG == 1:
+            print("Generating start_prob and transition count matrix...")
 
-if __name__ == "__main__":
-    # Load the training data
-    train_sents = list(conll2002.iob_sents("esp.train"))
-    dev_sents = list(conll2002.iob_sents("esp.testa"))
-    test_sents = list(conll2002.iob_sents("esp.testb"))     # [ [('Comisión', 'NC', 'B-ORG'), ('Europea', 'AQ', 'I-ORG'), (',', 'Fc', 'O'), ...], ...]
+        trans_count_mat = np.zeros((n_hidden_state, n_hidden_state))
+        start_prob_count_mat = np.zeros((n_hidden_state))
 
+        for sent in train_sents:
+            prev_hidden_state_id = None
 
-    # N_COMPONENTS = 9
-    # start_prob_mat = get_start_prob_mat(train_sents, N_COMPONENTS)
-    # trans_mat = gen_trans_mat(train_sents, N_COMPONENTS)  # array, shape (n_components, n_components)
-    # model = hmm.GaussianHMM(n_components=N_COMPONENTS)
-    # model.startprob_ = start_prob_mat
-    # model.transmat_ = trans_mat
-    
-    state_count_hash = {}
-    obs_count_hash = {}
-    uniq_states = set()
+            # Aggregate start_prob (only on first word of the sentence/phrase)
+            first_hidden_state_id = hidden_state_to_hidden_state_id_map[sent[0][HIDDEN_STATE_IDX]]
+            start_prob_count_mat[first_hidden_state_id] += 1
 
-    # TODO: start as transition prob?
+            for word in sent:
+                hidden_state_id = hidden_state_to_hidden_state_id_map[word[HIDDEN_STATE_IDX]]
+                if prev_hidden_state_id != None:
+                    trans_count_mat[prev_hidden_state_id][hidden_state_id] += 1
+                prev_hidden_state_id = hidden_state_id
 
-    # Count number of state and number of observations
-    for sent in train_sents:    # TODO: can do with set, no need hash
-        # print("sent:", sent, ", send_len:", len(sent))  # sent = [('Comisión', 'NC', 'B-ORG'), ('Europea', 'AQ', 'I-ORG'), (',', 'Fc', 'O'), ...]
-        for word in sent:
-            # word = ('Comisión', 'NC', 'B-ORG')
-            if word[1] in state_count_hash:
-                state_count_hash[word[1]] += 1
-            else:
-                state_count_hash[word[1]] = 1
+        if DEBUG_DATA == 1:
+            print("start_prob_count_mat={}".format(start_prob_count_mat))
+            print("trans_count_mat={}".format(trans_count_mat))
 
-            if word[2] in obs_count_hash:
-                obs_count_hash[word[2]] += 1
-            else:
-                obs_count_hash[word[2]] = 1
+        return start_prob_count_mat, trans_count_mat
 
-    state_count_sum = sum(state_count_hash.values())
-    n_state = len(list(state_count_hash.keys()))
-    n_obs = len(list(obs_count_hash.keys()))
+    @staticmethod
+    def calc_start_trans_prob(start_prob_count_mat, trans_count_mat):
+        # Generate probability version of the count matrix
+        if DEBUG == 1:
+            print("Generating probability version of the count matrix...")
 
-    # Generate state to state_id map # TODO: can do with set, no need map
-    state_to_state_id_map = {}
-    for i in range(len(state_count_hash.keys())):
-        state_val = list(state_count_hash.keys())[i]
-        state_to_state_id_map[state_val] = i
+        start_prob_mat = start_prob_count_mat / np.sum(start_prob_count_mat) 
+        start_prob_mat[start_prob_mat == 0.] = 1e-10
 
-    # Generate obs to obs_id map # TODO: can do with set, no need map
-    obs_to_obs_id_map = {}
-    for i in range(len(obs_count_hash.keys())):
-        obs_val = list(obs_to_obs_id_map.keys())[i]
-        obs_to_obs_id_map[obs_val] = i
+        trans_mat = trans_count_mat/np.sum(trans_count_mat,axis=1).reshape(-1,1)
+        trans_mat[trans_mat == 0.] = 1e-10
 
-    # Generate start_prob and transition count matrix
-    trans_count_mat = np.zeros((n_state, n_state))
-    start_prob_count_mat = np.zeros((n_state))
+        if DEBUG_DATA == 1:
+            print("start_prob_mat={}".format(start_prob_mat))
+            print("trans_mat={}".format(trans_mat))
 
-    for sent in train_sents:
-        # Aggregate trans_count_mat on first word (sent[0])
-        state_val = sent[0][1]
-        state_id = state_to_state_id_map[state_val]
-        start_prob_count_mat[state_id] += 1
+        return start_prob_mat, trans_mat
 
-        prev_state_id = None
+class CALC_EMISSION_MAT:
+    @staticmethod
+    def gen_emission_mat(train_sents, n_hidden_state, n_obs, hidden_state_to_hidden_state_id_map, obs_to_obs_id_map):
+        if DEBUG == 1:
+            print("Generating emission_mat")
+        emission_count_mat = CALC_EMISSION_MAT.count_emission(train_sents, n_hidden_state, n_obs, hidden_state_to_hidden_state_id_map, obs_to_obs_id_map)
+        emission_mat = CALC_EMISSION_MAT.calc_emission(emission_count_mat)
+        return emission_mat
 
-        for word in sent:
-            state_val = word[1]
-            state_id = state_to_state_id_map[state_val]
+    @staticmethod
+    def count_emission(train_sents, n_hidden_state, n_obs, hidden_state_to_hidden_state_id_map, obs_to_obs_id_map):
+        emission_count_mat = np.zeros((n_hidden_state, n_obs))
+        for sent in train_sents:
+            for word in sent:
+                hidden_state_id = hidden_state_to_hidden_state_id_map[word[HIDDEN_STATE_IDX]]
+                obs_id = obs_to_obs_id_map[word[OBS_IDX]]
+                emission_count_mat[hidden_state_id][obs_id] += 1
 
-            if prev_state_id != None: # Skip first word for now. TODO: consider adding one more state '$' indicating start of phrase.
-                trans_count_mat[prev_state_id][state_id] += 1
-            
-            prev_state_id = state_id
+        if DEBUG_DATA == 1:
+            print("emission_count_mat[:,:6]={}".format(emission_count_mat[:,:5]))
+            print("emission_count_mat sum = ", np.sum(emission_count_mat, axis=1))
 
-    # np.set_printoptions(threshold=np.inf) # uncomment to print entire matrix
-    # print("trans_count_mat")
-    # print(trans_count_mat)
+        return emission_count_mat
 
-    # print("state_to_state_id_map")
-    # print(state_to_state_id_map)
+    @staticmethod
+    def calc_emission(emission_count_mat):
+        emission_mat = emission_count_mat/np.sum(emission_count_mat,axis=1).reshape(-1,1)
+        emission_mat[emission_mat == 0.] = 1e-10
+        return emission_mat
 
-    # Generate probability version of the count matrix
-    start_prob_mat = start_prob_count_mat / np.sum(start_prob_count_mat) 
+class MODEL:
+    @staticmethod
+    def batch_predict(data, model, hidden_state_id_to_hidden_state_map, obs_to_obs_id_map):
+        if DEBUG == 1:
+            print("Batch predicting...")
 
-    trans_mat = np.zeros(trans_count_mat.shape)
-    for row_id in range(trans_count_mat.shape[0]):
-        trans_row = trans_count_mat[row_id]
-        sum_per_row = np.sum(trans_row)
-        trans_mat[row_id] = trans_row/np.sum(trans_row) if sum_per_row != 0 else np.zeros(trans_row.shape)
+        X = []
+        lengths = []
 
-    print("start_prob_mat")
-    print(start_prob_mat)
+        # Preprocess test data
+        unfound_obs_count = 0
+        for sent in data:
+            lengths.append(len(sent))
+            for j in range(len(sent)):
+                word = sent[j]
+                if word[OBS_IDX] in obs_to_obs_id_map.keys():
+                    obs_id = obs_to_obs_id_map[word[OBS_IDX]]
+                else:
+                    obs_id = random.randint(0, len(obs_to_obs_id_map.keys())-1)
+                    unfound_obs_count += 1
+                X.append(obs_id)
+        X = np.array(X).reshape((len(X), 1))
+        # X = X.reshape((X.shape[0], 1))
 
-    print("trans_mat")
-    print(trans_mat)
+        if DEBUG == 1:
+            print("Unseen observation from test_data=", unfound_obs_count)
+        
+        # Predict
+        _, hidden_state_id_preds = model.decode(X, lengths)  # alice_hears -> hidden_state
+        
+        pred_arr = []
+        for hidden_state_id_pred in hidden_state_id_preds:
+            hidden_state = hidden_state_id_to_hidden_state_map[hidden_state_id_pred]
+            pred_arr.append(hidden_state)
 
-    # Generate emission mat
-    emission_count_mat = np.zeros((n_state, n_obs))
-    for sent in train_sents:
-        for word in sent:
-            state = word[1]
-            obs = word[2]
+        return pred_arr
 
-            state_id = state_to_state_id_map[state]
-            obs_id = obs_to_obs_id_map[obs]
+    @staticmethod
+    def get_model(start_prob_mat, trans_mat, emission_mat, n_hidden_state):
+        model = hmm.MultinomialHMM(n_components = n_hidden_state)
+        model.startprob_ = start_prob_mat
+        model.transmat_ = trans_mat
+        model.emissionprob_ = emission_mat
+        return model
 
-            emission_count_mat[state_id][obs_id] += 1
-
-    # Generate emission prob mat
-    emission_mat = np.zeros(emission_count_mat.shape)
-    for row_id in range(emission_mat.shape[0]):
-        emis_row = emission_mat[row_id]
-        sum_per_row = np.sum(emis_row)
-        emission_mat[row_id] = emis_row/np.sum(emis_row) if sum_per_row != 0 else np.zeros(emis_row.shape)
-
-    # Apply model
-    model = hmm.MultinomialHMM(n_components=n_state)
-    model.startprob = start_prob_mat
-    model.transmat = trans_mat
-    model.emissionprob = emission_mat
-
-    # Generate sequence to predict
-    for sent in train_sents:    # TODO: can do with set, no need hash
-        # print("sent:", sent, ", send_len:", len(sent))  # sent = [('Comisión', 'NC', 'B-ORG'), ('Europea', 'AQ', 'I-ORG'), (',', 'Fc', 'O'), ...]
-        for word in sent:
-
-
-    bob_says = np.array([[0, 2, 1, 1, 2, 0]]).T   # bob_says -> observation
-
-    model = model.fit(bob_says)
-    logprob, alice_hears = model.decode(bob_says, algorithm="viterbi")  # alice_hears -> state
-
-    print("bob_says")
-    print(bob_says)
-
-    print("alice_hears")
-    print(alice_hears)
-
-
-
-
-    # start_prob_dict = {k: v / state_count_sum for (k, v) in state_count_hash.items()}
-
-    # n_uniq_states = len(state_count_hash.keys())
-
-
-    # model = GaussianHMM(n_components = n_uniq_states)
-
-
-    '''
-    vectorizer = DictVectorizer()
-    X_train = vectorizer.fit_transform(train_feats)
-
-    # # TODO: play with other models
-    # model = GaussianHMM(n_components = 9) # Perceptron(verbose=1)
-    # print(X_train)
-
-    # model.fit(X_train, train_labels)
-
-    test_feats = []
-    test_labels = []
-
-    # switch to test_sents for your final results
-    for sent in dev_sents: # test_sents: # :
-        for i in range(len(sent)):
-            feats = word2features(sent, i)
-            test_feats.append(feats)
-            test_labels.append(sent[i][-1])
-
-    X_test = vectorizer.transform(test_feats)
-    y_pred = model.predict(X_test)
-
+def write_to_results_txt(data_to_pred, preds):
     j = 0
-    print("Writing to results.txt")
+    if DEBUG == 1:
+        print("Writing to results.txt")
     # format is: word gold pred
     with open("results.txt", "w") as out:
-        for sent in dev_sents: # test_sents: # dev_sents:
+        for sent in data_to_pred:
             for i in range(len(sent)):
                 word = sent[i][0]
                 gold = sent[i][-1]
-                pred = y_pred[j]
+                pred = preds[j]
                 j += 1
                 out.write("{}\t{}\t{}\n".format(word, gold, pred))
         out.write("\n")
 
-    print("Now run: python conlleval.py results.txt")
-    '''
-    
+def main():
+    # A: Load the training data # [[('Comisión', 'NC', 'B-ORG'), ('Europea', 'AQ', 'I-ORG'), (',', 'Fc', 'O'), ...], ...]
+    train_sents = list(conll2002.iob_sents("esp.train"))
+    dev_sents = list(conll2002.iob_sents("esp.testa"))
+    test_sents = list(conll2002.iob_sents("esp.testb")) 
+
+    # B: Count number of hidden_state and observations, as well as generate mapping
+    hidden_state_to_hidden_state_id_map, hidden_state_id_to_hidden_state_map, obs_to_obs_id_map, obs_id_to_obs_map, n_hidden_state, n_obs = CALC_N_HIDDEN_STATE_OBS.gen_hidden_state_and_obs_count_and_mapping(train_sents)
+    if DEBUG_DATA == 1:
+        print("n_obs={}, n_hidden={}".format(n_obs, n_hidden_state))
+
+    # C: Generate start_prob and transition count matrix
+    start_prob_mat, trans_mat = CALC_START_TRANS_MAT.gen_start_and_transition_mat(train_sents, n_hidden_state, hidden_state_to_hidden_state_id_map)
+
+    # D: Generate emission mat
+    emission_mat = CALC_EMISSION_MAT.gen_emission_mat(train_sents, n_hidden_state, n_obs, hidden_state_to_hidden_state_id_map, obs_to_obs_id_map)
+
+    # E: train/instantiate model
+    model = MODEL.get_model(start_prob_mat, trans_mat, emission_mat, n_hidden_state)
+
+    # F: Prediction
+    data_to_pred = test_sents
+    pred_arr = MODEL.batch_predict(data_to_pred, model, hidden_state_id_to_hidden_state_map, obs_to_obs_id_map)
+
+    # G: write to result
+    write_to_results_txt(data_to_pred, pred_arr)
+
+if __name__ == "__main__":
+    HIDDEN_STATE_IDX = 2
+    OBS_IDX = 0
+    DEBUG_DATA = 0
+    DEBUG = 1
+    # np.set_printoptions(threshold=np.inf) # uncomment to print entire matrix
+    main()
