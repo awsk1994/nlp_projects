@@ -19,7 +19,8 @@ python3 k-fold-linear.py -r 0.1 -L word -f 2 -C 6 -W 2 -train data/train/spanish
 
 
 
-
+# Original
+https://github.com/coltekin/emoji2018
 
 This repository contains the source code used by Tübingen-Oslo team in
 [SemEval-2018](http://alt.qcri.org/semeval2018/)

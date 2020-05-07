@@ -1,0 +1,14 @@
+model_dir: run/
+
+data:
+  train_features_file: ./train/english_train.text
+  train_labels_file: ./train/english_train.labels
+  eval_features_file: ./test/english_test.text
+  eval_labels_file: ./test/english_test.labels
+ 
+
+ # Train:
+ # onmt-main --model_type Transformer --config data.yml --auto_config train --with_eval
+
+ # Inference:
+ # onmt-main --config data.yml --auto_config infer --features_file english_test.text
