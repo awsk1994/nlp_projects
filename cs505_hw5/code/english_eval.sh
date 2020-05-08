@@ -1,0 +1,1 @@
+python3 scorer_semeval18.py data/test/english_test.labels english_results.txt
